@@ -17,9 +17,17 @@ Event: 13–17 Nov 2026, 7 Swiss rounds → Top 16 knockout · 20 turns/match ·
   entered the arena.
 - ⚠️ Practice turns FAILED 16 Nov 2026 ~19:00 WIB (3× Extract/Hold): "Agent
   response did not match the VFY protocol schema" — the agent produced valid
-  Groth16 proofs, so the fault is a response field, not the proof. Fix in
-  progress: removed `agentTimestamp` from the response (not listed in /build
-  §06 "What you return"); re-testing practice after redeploy.
+  Groth16 proofs, so the fault is a response field, not the proof. First fix
+  (commit 31e4910, removed `agentTimestamp`) was WRONG and did not help.
+  The platform diagnostic (practice, 21:42 WIB, pasted by the user) proved
+  two things: (1) `agentTimestamp` IS a required string field in the Steal
+  turn-response schema ("expected string, received undefined" when absent);
+  (2) that dispatch went to the WRONG agent — the gatekeeper endpoint
+  (agent-games-ozawa-production…), whose INVALID_TASK reply has none of the
+  Steal fields, because the wrong agent was picked on the Practice page.
+  Fix: `agentTimestamp` (ISO string, once per turn, cached) restored to the
+  response; always dispatch practice for ozawa-duel. Re-testing practice
+  after redeploy.
 - ❌ The Proof Gatekeeper agent (`../agent-games-proof-gatekeeper`) is a SEPARATE
   service and is LIVE in Round 04 right now — do not touch it or its Railway
   service for this track. This folder deploys as its own Railway service.

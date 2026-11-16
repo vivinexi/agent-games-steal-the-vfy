@@ -323,14 +323,18 @@ async function handleTurn(env) {
         publicInputsHash: publicInputsHash(
           commitmentDecimal, matchId, turn, selfBalance, opponentBalance, move.type, move.amountNum),
       },
-      // NOTE: no agentTimestamp. It is NOT listed in /build §06 "What you
-      // return" (only matchId, turn, action, policyProof, plus optional
-      // proofReference/publicInputsHash and the idempotencyKey the docs'
-      // Common-mistakes section references). Practice delivery rejected the
-      // response with agentTimestamp present ("did not match the VFY
-      // protocol schema", 2026-11-16); a strict validator rejects the extra
-      // field. If practice still fails, read the platform diagnostic for
-      // the exact field path before changing anything else.
+      // agentTimestamp is REQUIRED by the Steal turn-response schema:
+      // the platform diagnostic (practice, 2026-11-16 21:42 WIB) lists
+      // "agentTimestamp: Invalid input: expected string, received
+      // undefined" when it is absent. It is generated once per turn and
+      // cached with the rest of the response, so retries stay identical.
+      // (The earlier removal, commit 31e4910, was based on a wrong guess
+      // that the extra field caused the rejection; the diagnostic proved
+      // the opposite. The same diagnostic also showed a practice dispatch
+      // can land on the wrong agent — the gatekeeper endpoint — when the
+      // wrong agent is picked on the Practice page, so always dispatch
+      // for ozawa-duel.)
+      agentTimestamp: new Date().toISOString(),
       idempotencyKey: idempotencyKey(matchId, turn),
     };
     const raw = JSON.stringify(out);
