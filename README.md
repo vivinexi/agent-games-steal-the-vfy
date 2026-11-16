@@ -15,19 +15,16 @@ Event: 13–17 Nov 2026, 7 Swiss rounds → Top 16 knockout · 20 turns/match ·
 - ✅ Registered 16 Nov 2026 ~18:50 WIB: agent ozawa-duel, Steal the VFY only,
   HMAC secret set, strategy commitment ACTIVE REGISTERED, preflight OK (258ms),
   entered the arena.
-- ⚠️ Practice turns FAILED 16 Nov 2026 ~19:00 WIB (3× Extract/Hold): "Agent
-  response did not match the VFY protocol schema" — the agent produced valid
-  Groth16 proofs, so the fault is a response field, not the proof. First fix
-  (commit 31e4910, removed `agentTimestamp`) was WRONG and did not help.
-  The platform diagnostic (practice, 21:42 WIB, pasted by the user) proved
-  two things: (1) `agentTimestamp` IS a required string field in the Steal
-  turn-response schema ("expected string, received undefined" when absent);
-  (2) that dispatch went to the WRONG agent — the gatekeeper endpoint
-  (agent-games-ozawa-production…), whose INVALID_TASK reply has none of the
-  Steal fields, because the wrong agent was picked on the Practice page.
-  Fix: `agentTimestamp` (ISO string, once per turn, cached) restored to the
-  response; always dispatch practice for ozawa-duel. Re-testing practice
-  after redeploy.
+- ✅ Practice turns FAILED 16 Nov 2026 ~19:00–21:49 WIB — root cause found in
+  the platform diagnostic (22:09 WIB, pasted by the user): the ONLY failing
+  field was `idempotencyKey: Invalid UUID`. The key was a dashed hex string
+  from a SHA-256 hash, but the platform validates UUID strictly (version +
+  variant bits), and the hash bytes set those bits at random. The earlier
+  agentTimestamp removal (commit 31e4910) was a wrong guess; agentTimestamp
+  is required and was restored (commit cef5beb). Fix: idempotencyKey is now
+  a deterministic UUID v4 (SHA-256 of matchId:turn, version nibble forced to
+  4, variant bits to RFC 4122), and the local test now checks the strict v4
+  pattern. Re-testing practice after redeploy.
 - ❌ The Proof Gatekeeper agent (`../agent-games-proof-gatekeeper`) is a SEPARATE
   service and is LIVE in Round 04 right now — do not touch it or its Railway
   service for this track. This folder deploys as its own Railway service.

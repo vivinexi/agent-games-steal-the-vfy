@@ -260,10 +260,18 @@ function publicInputsHash(commitment, matchId, turn, selfBalance, opponentBalanc
 }
 
 // Deterministic idempotency key: unique per (matchId, turn), stable across
-// retries of the same turn, formatted as a UUID.
+// retries of the same turn, formatted as a UUID v4. The platform validates
+// idempotencyKey with a strict UUID check (version + variant bits), so the
+// raw hash bytes are NOT enough — a plain dashed hex string fails with
+// "Invalid UUID" (diagnostic 22:09 WIB, 16 Nov 2026). Set the version nibble
+// to 4 and the variant bits to RFC 4122 (10xx) explicitly.
 function idempotencyKey(matchId, turn) {
   const hex = crypto.createHash('sha256').update(`${matchId}:${turn}`).digest('hex');
-  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20, 32)}`;
+  const b = Buffer.from(hex.slice(0, 32), 'hex');
+  b[6] = (b[6] & 0x0f) | 0x40; // version 4
+  b[8] = (b[8] & 0x3f) | 0x80; // variant RFC 4122
+  const h = b.toString('hex');
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20, 32)}`;
 }
 
 const responseCache = new Map(); // "matchId:turn" -> serialized response (retry = identical)

@@ -135,7 +135,10 @@ function verifyResponseSig(text, sig) {
     check('publicInputsHash matches the documented keccak formula (independent recomputation)',
       hashMatches, ext.json && ext.json.policyProof && ext.json.policyProof.publicInputsHash);
     check('turn response is HMAC-signed', verifyResponseSig(ext.text, ext.headers.get('x-agent-games-signature')));
-    check('idempotencyKey is a UUID', ext.json && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(ext.json.idempotencyKey || ''), ext.json && ext.json.idempotencyKey);
+    // Strict UUID v4: shape + version nibble 4 + variant nibble 8/9/a/b.
+    // A shape-only check passed the old key, but the platform's strict
+    // validator rejected it ("Invalid UUID", diagnostic 22:09 WIB 16 Nov 2026).
+    check('idempotencyKey is a UUID v4', ext.json && /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(ext.json.idempotencyKey || ''), ext.json && ext.json.idempotencyKey);
     check('proof and public_signals sit INSIDE policyProof (not top level)',
       ext.json && !('proof' in ext.json) && !('public_signals' in ext.json));
 
