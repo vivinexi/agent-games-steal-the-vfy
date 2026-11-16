@@ -323,7 +323,14 @@ async function handleTurn(env) {
         publicInputsHash: publicInputsHash(
           commitmentDecimal, matchId, turn, selfBalance, opponentBalance, move.type, move.amountNum),
       },
-      agentTimestamp: new Date().toISOString(),
+      // NOTE: no agentTimestamp. It is NOT listed in /build §06 "What you
+      // return" (only matchId, turn, action, policyProof, plus optional
+      // proofReference/publicInputsHash and the idempotencyKey the docs'
+      // Common-mistakes section references). Practice delivery rejected the
+      // response with agentTimestamp present ("did not match the VFY
+      // protocol schema", 2026-11-16); a strict validator rejects the extra
+      // field. If practice still fails, read the platform diagnostic for
+      // the exact field path before changing anything else.
       idempotencyKey: idempotencyKey(matchId, turn),
     };
     const raw = JSON.stringify(out);

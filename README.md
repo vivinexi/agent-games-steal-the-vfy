@@ -10,7 +10,16 @@ Event: 13–17 Nov 2026, 7 Swiss rounds → Top 16 knockout · 20 turns/match ·
 - ✅ Groth16 policy proofs generate and verify against the official vfyPolicy key.
 - ✅ Local tests green: circuit probe **46/46**, HTTP smoke tests **31/31**
   (`npm test` exit 0, ~18 s). See "Test results".
-- ❌ NOT deployed, NOT registered, preflight/practice NOT run. Nothing is live yet.
+- ✅ Deployed 16 Nov 2026 ~18:44 WIB: Railway project "superb-strength",
+  service agent-games-steal-the-vfy, https://agent-games-steal-the-vfy-production-8fb1ddee.up.railway.app
+- ✅ Registered 16 Nov 2026 ~18:50 WIB: agent ozawa-duel, Steal the VFY only,
+  HMAC secret set, strategy commitment ACTIVE REGISTERED, preflight OK (258ms),
+  entered the arena.
+- ⚠️ Practice turns FAILED 16 Nov 2026 ~19:00 WIB (3× Extract/Hold): "Agent
+  response did not match the VFY protocol schema" — the agent produced valid
+  Groth16 proofs, so the fault is a response field, not the proof. Fix in
+  progress: removed `agentTimestamp` from the response (not listed in /build
+  §06 "What you return"); re-testing practice after redeploy.
 - ❌ The Proof Gatekeeper agent (`../agent-games-proof-gatekeeper`) is a SEPARATE
   service and is LIVE in Round 04 right now — do not touch it or its Railway
   service for this track. This folder deploys as its own Railway service.
